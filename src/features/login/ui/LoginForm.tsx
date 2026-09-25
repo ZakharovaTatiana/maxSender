@@ -1,18 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '@entities/session';
+import { isValidSessionCredentials, setCredentials } from '@entities/session';
 import { EyeIcon } from './EyeIcon';
 
 const DEFAULT_API_URL = 'https://3100.api.green-api.com';
-
-function isValidHttpUrl(value: string) {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
 
 export function LoginForm() {
   const dispatch = useDispatch();
@@ -28,17 +19,20 @@ export function LoginForm() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!isValidHttpUrl(apiUrl)) {
+    const credentials = { idInstance, apiTokenInstance, apiUrl };
+
+    if (!isValidSessionCredentials(credentials)) {
       return;
     }
 
-    dispatch(setCredentials({ idInstance, apiTokenInstance, apiUrl }));
+    dispatch(setCredentials(credentials));
   };
 
-  const canSubmit =
-    idInstance.length > 0 &&
-    apiTokenInstance.length > 0 &&
-    isValidHttpUrl(apiUrl);
+  const canSubmit = isValidSessionCredentials({
+    idInstance,
+    apiTokenInstance,
+    apiUrl,
+  });
 
   return (
     <form

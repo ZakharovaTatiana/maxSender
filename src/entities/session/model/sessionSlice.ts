@@ -6,6 +6,34 @@ export interface SessionState {
   apiUrl: string;
 }
 
+export function isValidHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+export function isValidSessionCredentials(
+  value: unknown,
+): value is SessionState {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const credentials = value as Record<string, unknown>;
+
+  return (
+    typeof credentials.idInstance === 'string' &&
+    /^\d+$/.test(credentials.idInstance) &&
+    typeof credentials.apiTokenInstance === 'string' &&
+    credentials.apiTokenInstance.trim().length > 0 &&
+    typeof credentials.apiUrl === 'string' &&
+    isValidHttpUrl(credentials.apiUrl)
+  );
+}
+
 const initialState: SessionState = {
   idInstance: '',
   apiTokenInstance: '',
@@ -33,6 +61,4 @@ export const { setCredentials, clearCredentials } = sessionSlice.actions;
 export const sessionReducer = sessionSlice.reducer;
 
 export const selectIsAuthorized = (state: { session: SessionState }) =>
-  state.session.idInstance.length > 0 &&
-  state.session.apiTokenInstance.length > 0 &&
-  state.session.apiUrl.length > 0;
+  isValidSessionCredentials(state.session);
