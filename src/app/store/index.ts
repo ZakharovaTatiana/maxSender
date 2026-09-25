@@ -1,9 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { sessionReducer } from '@entities/session';
 
-// Замените корневой reducer на карту reducers по мере появления сущностей и фич.
-const initialState = {};
 export const store = configureStore({
-  reducer: (state = initialState) => state,
+  reducer: {
+    session: sessionReducer,
+  },
 });
 
 export type RootState = ReturnType<typeof store.getState>;

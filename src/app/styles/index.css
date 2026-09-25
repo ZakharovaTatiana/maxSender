@@ -5,3 +5,24 @@
     @apply m-0 min-w-80 bg-slate-50 font-sans text-slate-900 antialiased;
   }
 }
+
+@layer utilities {
+  .app-background {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(28deg, #99d5d7 8.03%, #80bcff 91.51%);
+  }
+
+  .app-background::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background: linear-gradient(
+      28deg,
+      rgb(0 122 255 / 30%) 8.03%,
+      rgb(0 122 255 / 30%) 91.51%
+    );
+    content: '';
+    mask-image: url('/images/pattern-space.svg');
+  }
+}
