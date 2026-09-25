@@ -62,3 +62,6 @@ export const sessionReducer = sessionSlice.reducer;
 
 export const selectIsAuthorized = (state: { session: SessionState }) =>
   isValidSessionCredentials(state.session);
+
+export const selectSession = (state: { session: SessionState }) =>
+  state.session;

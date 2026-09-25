@@ -1,6 +1,7 @@
 export {
   sessionReducer,
   selectIsAuthorized,
+  selectSession,
   setCredentials,
   clearCredentials,
   isValidHttpUrl,
