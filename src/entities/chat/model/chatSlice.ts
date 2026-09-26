@@ -119,7 +119,13 @@ const chatsSlice = createSlice({
       const chat = state[chatId];
 
       if (chat) {
-        chat.messages = messages;
+        const merged = new Map(
+          chat.messages.map((message) => [message.idMessage, message]),
+        );
+        messages.forEach((message) => merged.set(message.idMessage, message));
+        chat.messages = Array.from(merged.values()).sort(
+          (left, right) => left.timestamp - right.timestamp,
+        );
         chat.historyStatus = 'loaded';
       }
     },

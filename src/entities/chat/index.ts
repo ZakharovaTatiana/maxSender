@@ -1,5 +1,6 @@
 export { getChatName } from './lib/getChatName';
 export { parseChatMessage } from './lib/parseChatMessage';
+export { parseNotificationMessage } from './lib/parseNotificationMessage';
 export { ChatAvatar } from './ui/ChatAvatar';
 export { ChatList } from './ui/ChatList';
 export {
