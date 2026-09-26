@@ -166,7 +166,7 @@ export function ContactSearchForm() {
         {hasPhoneNumber && (
           <button
             aria-label="Найти контакт"
-            className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-[#3478f6] text-white transition hover:bg-[#2868dc] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3478f6] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+            className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[#3478f6] text-white transition hover:bg-[#2868dc] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3478f6] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
             disabled={!isPhoneNumberValid || isSubmitting}
             type="submit"
           >

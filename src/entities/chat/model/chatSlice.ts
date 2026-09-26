@@ -11,10 +11,42 @@ export interface ContactInfo extends Record<string, unknown> {
   phoneNumberTimestamp?: number;
 }
 
+export interface ChatMessage {
+  type: 'incoming' | 'outgoing';
+  idMessage: string;
+  timestamp: number;
+  typeMessage: 'textMessage' | 'extendedTextMessage';
+  chatId: string;
+  chatType: string;
+  textMessage: string;
+  extendedTextMessage?: {
+    text: string;
+    description?: string;
+    title?: string;
+    isForwarded?: boolean;
+    forwardingScore?: number;
+  };
+  statusMessage?: string;
+  sendByApi?: boolean;
+  senderId?: string;
+  senderName?: string;
+  senderType?: string;
+  senderContactName?: string;
+  isForwarded?: boolean;
+  forwardingScore?: number;
+  isEdited?: boolean;
+  isDeleted?: boolean;
+}
+
+export type ChatHistoryStatus = 'idle' | 'loading' | 'loaded' | 'failed';
+
 export interface Chat {
   chatId: string;
   order: number;
   contactInfo?: ContactInfo;
+  isActive?: boolean;
+  messages: ChatMessage[];
+  historyStatus: ChatHistoryStatus;
 }
 
 export type ChatsState = Record<string, Chat>;
@@ -38,6 +70,8 @@ const chatsSlice = createSlice({
       state[chatId] = {
         chatId,
         order: maxOrder + 1,
+        messages: [],
+        historyStatus: 'idle',
       };
     },
     setChatContactInfo: (
@@ -52,13 +86,67 @@ const chatsSlice = createSlice({
         chat.contactInfo = contactInfo;
       }
     },
+    activateChat: (state, { payload: chatId }: PayloadAction<string>) => {
+      Object.values(state).forEach((chat) => {
+        chat.isActive = chat.chatId === chatId;
+      });
+    },
+    deactivateChat: (state) => {
+      Object.values(state).forEach((chat) => {
+        chat.isActive = false;
+      });
+    },
+    startChatHistoryLoading: (
+      state,
+      { payload: chatId }: PayloadAction<string>,
+    ) => {
+      const chat = state[chatId];
+
+      if (chat?.historyStatus === 'idle') {
+        chat.historyStatus = 'loading';
+      }
+    },
+    setChatMessages: (
+      state,
+      {
+        payload: { chatId, messages },
+      }: PayloadAction<{ chatId: string; messages: ChatMessage[] }>,
+    ) => {
+      const chat = state[chatId];
+
+      if (chat) {
+        chat.messages = messages;
+        chat.historyStatus = 'loaded';
+      }
+    },
+    failChatHistoryLoading: (
+      state,
+      { payload: chatId }: PayloadAction<string>,
+    ) => {
+      const chat = state[chatId];
+
+      if (chat) {
+        chat.historyStatus = 'failed';
+      }
+    },
   },
 });
 
-export const { addChat, setChatContactInfo } = chatsSlice.actions;
+export const {
+  activateChat,
+  addChat,
+  deactivateChat,
+  failChatHistoryLoading,
+  setChatContactInfo,
+  setChatMessages,
+  startChatHistoryLoading,
+} = chatsSlice.actions;
 export const chatsReducer = chatsSlice.reducer;
 
 export const selectChatsState = (state: { chats: ChatsState }) => state.chats;
 
 export const selectChats = (state: { chats: ChatsState }) =>
   Object.values(state.chats).sort((left, right) => left.order - right.order);
+
+export const selectActiveChat = (state: { chats: ChatsState }) =>
+  Object.values(state.chats).find((chat) => chat.isActive) ?? null;
