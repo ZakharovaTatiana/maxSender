@@ -119,6 +119,24 @@ const chatsSlice = createSlice({
         chat.historyStatus = 'loaded';
       }
     },
+    addChatMessage: (
+      state,
+      {
+        payload: { chatId, message },
+      }: PayloadAction<{ chatId: string; message: ChatMessage }>,
+    ) => {
+      const chat = state[chatId];
+
+      if (
+        !chat ||
+        chat.messages.some(({ idMessage }) => idMessage === message.idMessage)
+      ) {
+        return;
+      }
+
+      chat.messages.push(message);
+      chat.messages.sort((left, right) => left.timestamp - right.timestamp);
+    },
     failChatHistoryLoading: (
       state,
       { payload: chatId }: PayloadAction<string>,
@@ -134,6 +152,7 @@ const chatsSlice = createSlice({
 
 export const {
   activateChat,
+  addChatMessage,
   addChat,
   deactivateChat,
   failChatHistoryLoading,

@@ -7,11 +7,15 @@ import {
 } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  addChatMessage,
   ChatAvatar,
   deactivateChat,
   getChatName,
   selectActiveChat,
 } from '@entities/chat';
+import { selectSession } from '@entities/session';
+import { getMessage, sendMessage } from '@features/send-message';
+import { ErrorTooltip } from '@shared/ui';
 import { MessageHistory } from './MessageHistory';
 
 export function ChatDetails() {
@@ -30,7 +34,10 @@ interface ActiveChatDetailsProps {
 
 function ActiveChatDetails({ chat }: ActiveChatDetailsProps) {
   const dispatch = useDispatch();
+  const credentials = useSelector(selectSession);
   const [message, setMessage] = useState('');
+  const [sendError, setSendError] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useLayoutEffect(() => {
@@ -47,15 +54,36 @@ function ActiveChatDetails({ chat }: ActiveChatDetailsProps) {
   const chatName = getChatName(chat);
   const hasMessage = message.trim().length > 0;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!hasMessage) {
+    if (!hasMessage || isSending) {
       return;
     }
 
-    console.log(message);
+    setIsSending(true);
+    setSendError('');
+
+    let idMessage: string;
+
+    try {
+      idMessage = await sendMessage(credentials, chat.chatId, message);
+    } catch {
+      setSendError('Ошибка отправки сообщения, попробуйте позже');
+      setIsSending(false);
+      return;
+    }
+
     setMessage('');
+
+    try {
+      const sentMessage = await getMessage(credentials, chat.chatId, idMessage);
+      dispatch(addChatMessage({ chatId: chat.chatId, message: sentMessage }));
+    } catch {
+      // Sending succeeded, but the journal entry is not available yet.
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -100,12 +128,19 @@ function ActiveChatDetails({ chat }: ActiveChatDetailsProps) {
 
       <form className="shrink-0 p-3 sm:p-4" onSubmit={handleSubmit}>
         <div className="relative mx-auto max-w-3xl">
+          {sendError && (
+            <ErrorTooltip message={sendError} setMessage={setSendError} />
+          )}
           <label>
             <span className="sr-only">Сообщение</span>
             <textarea
               className="block min-h-12 w-full resize-none overflow-hidden rounded-2xl bg-white py-3 pr-14 pl-4 text-sm leading-6 text-slate-950 shadow-sm outline-none transition placeholder:text-slate-400 focus:ring-2 focus:ring-[#3478f6]"
               name="message"
-              onChange={(event) => setMessage(event.target.value)}
+              maxLength={4000}
+              onChange={(event) => {
+                setSendError('');
+                setMessage(event.target.value);
+              }}
               onKeyDown={handleKeyDown}
               placeholder="Сообщение"
               ref={textareaRef}
@@ -116,7 +151,7 @@ function ActiveChatDetails({ chat }: ActiveChatDetailsProps) {
           <button
             aria-label="Отправить сообщение"
             className="absolute right-2 bottom-2 flex size-8 cursor-pointer items-center justify-center rounded-full bg-[#3478f6] text-white transition hover:bg-[#2868dc] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3478f6] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-            disabled={!hasMessage}
+            disabled={!hasMessage || isSending}
             type="submit"
           >
             <svg

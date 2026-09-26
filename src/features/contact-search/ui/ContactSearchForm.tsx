@@ -7,6 +7,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { addChat, selectChatsState, setChatContactInfo } from '@entities/chat';
 import { selectSession } from '@entities/session';
+import { ErrorTooltip } from '@shared/ui';
 import { checkAccount } from '../api/checkAccount';
 import { getContactInfo } from '../api/getContactInfo';
 import {
@@ -109,12 +110,7 @@ export function ContactSearchForm() {
     <form className="mt-5" onSubmit={handleSubmit}>
       <div className="relative flex">
         {searchError && (
-          <div
-            className="absolute right-0 bottom-full left-0 z-10 mb-2 rounded-lg bg-red-300 px-3 py-2 text-center text-sm text-slate-950 shadow-sm"
-            role="alert"
-          >
-            {searchError}
-          </div>
+          <ErrorTooltip message={searchError} setMessage={setSearchError} />
         )}
         <label>
           <span className="sr-only">Код страны</span>

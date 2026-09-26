@@ -1,8 +1,10 @@
 export { getChatName } from './lib/getChatName';
+export { parseChatMessage } from './lib/parseChatMessage';
 export { ChatAvatar } from './ui/ChatAvatar';
 export { ChatList } from './ui/ChatList';
 export {
   activateChat,
+  addChatMessage,
   addChat,
   chatsReducer,
   deactivateChat,
