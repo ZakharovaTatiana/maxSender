@@ -4,9 +4,11 @@ import {
   type ClipboardEvent,
   type FormEvent,
 } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { addChat, selectChatsState, setChatContactInfo } from '@entities/chat';
 import { selectSession } from '@entities/session';
 import { checkAccount } from '../api/checkAccount';
+import { getContactInfo } from '../api/getContactInfo';
 import {
   COUNTRY_OPTIONS,
   getNationalNumberLength,
@@ -16,12 +18,18 @@ import {
 } from '../model/phoneNumber';
 
 const DEFAULT_COUNTRY_CODE: CountryCode = '7';
+const SEARCH_ERROR_MESSAGE =
+  'ошибка номера, либо пользователь с таким номером не найден';
 
 export function ContactSearchForm() {
+  const dispatch = useDispatch();
   const credentials = useSelector(selectSession);
+  const chats = useSelector(selectChatsState);
   const [countryCode, setCountryCode] =
     useState<CountryCode>(DEFAULT_COUNTRY_CODE);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [searchError, setSearchError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const hasPhoneNumber = phoneNumber.length > 0;
   const isPhoneNumberValid = isValidNationalPhoneNumber(
     phoneNumber,
@@ -33,6 +41,7 @@ export function ContactSearchForm() {
     const nextCountryCode = event.target.value as CountryCode;
 
     setCountryCode(nextCountryCode);
+    setSearchError('');
     setPhoneNumber((currentNumber) =>
       currentNumber.slice(0, getNationalNumberLength(nextCountryCode)),
     );
@@ -40,6 +49,7 @@ export function ContactSearchForm() {
 
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
     const digits = event.target.value.replace(/\D/g, '');
+    setSearchError('');
     setPhoneNumber(digits.slice(0, nationalNumberLength));
   };
 
@@ -55,23 +65,57 @@ export function ContactSearchForm() {
       return;
     }
 
+    setSearchError('');
     setCountryCode(parsedPhoneNumber.countryCode);
     setPhoneNumber(parsedPhoneNumber.nationalNumber);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!isPhoneNumberValid) {
       return;
     }
 
-    void checkAccount(credentials, `${countryCode}${phoneNumber}`);
+    setIsSubmitting(true);
+    setSearchError('');
+
+    try {
+      const result = await checkAccount(
+        credentials,
+        `${countryCode}${phoneNumber}`,
+      );
+
+      if (chats[result.chatId]) {
+        return;
+      }
+
+      dispatch(addChat(result.chatId));
+
+      try {
+        const contactInfo = await getContactInfo(credentials, result.chatId);
+        dispatch(setChatContactInfo({ chatId: result.chatId, contactInfo }));
+      } catch {
+        // The chat remains available when optional contact data cannot be loaded.
+      }
+    } catch {
+      setSearchError(SEARCH_ERROR_MESSAGE);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form className="mt-5" onSubmit={handleSubmit}>
       <div className="relative flex">
+        {searchError && (
+          <div
+            className="absolute right-0 bottom-full left-0 z-10 mb-2 rounded-lg bg-red-300 px-3 py-2 text-center text-sm text-slate-950 shadow-sm"
+            role="alert"
+          >
+            {searchError}
+          </div>
+        )}
         <label>
           <span className="sr-only">Код страны</span>
           <select
@@ -123,7 +167,7 @@ export function ContactSearchForm() {
           <button
             aria-label="Найти контакт"
             className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-[#3478f6] text-white transition hover:bg-[#2868dc] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3478f6] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
-            disabled={!isPhoneNumberValid}
+            disabled={!isPhoneNumberValid || isSubmitting}
             type="submit"
           >
             <svg

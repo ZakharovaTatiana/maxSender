@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { chatsReducer } from '@entities/chat';
 import { sessionReducer } from '@entities/session';
 import { loadPersistedSession, persistSession } from './sessionPersistence';
 
@@ -6,6 +7,7 @@ const persistedSession = loadPersistedSession();
 
 export const store = configureStore({
   reducer: {
+    chats: chatsReducer,
     session: sessionReducer,
   },
   preloadedState: persistedSession
