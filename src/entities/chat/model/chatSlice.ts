@@ -106,7 +106,7 @@ const chatsSlice = createSlice({
     ) => {
       const chat = state[chatId];
 
-      if (chat?.historyStatus === 'idle') {
+      if (chat && chat.historyStatus !== 'loading') {
         chat.historyStatus = 'loading';
       }
     },

@@ -21,13 +21,14 @@ export function useOpenChat() {
 
       const chat = store.getState().chats[chatId];
 
-      if (!chat || chat.historyStatus !== 'idle') {
+      if (!chat || chat.historyStatus === 'loading') {
         return;
       }
 
+      const isInitialLoad = chat.historyStatus === 'idle';
       dispatch(startChatHistoryLoading(chatId));
 
-      void getChatHistory(credentials, chatId)
+      void getChatHistory(credentials, chatId, isInitialLoad ? undefined : 10)
         .then((messages) => {
           dispatch(setChatMessages({ chatId, messages }));
         })

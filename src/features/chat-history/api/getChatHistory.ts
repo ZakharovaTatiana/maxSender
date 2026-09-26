@@ -5,13 +5,14 @@ import { request } from '@shared/api';
 export async function getChatHistory(
   { apiUrl, idInstance, apiTokenInstance }: SessionState,
   chatId: string,
+  count?: number,
 ): Promise<ChatMessage[]> {
   const baseUrl = apiUrl.replace(/\/$/, '');
   const response = await request(
     `${baseUrl}/waInstance${idInstance}/getChatHistory/${apiTokenInstance}`,
     {
       method: 'POST',
-      body: { chatId },
+      body: count === undefined ? { chatId } : { chatId, count },
     },
   );
 

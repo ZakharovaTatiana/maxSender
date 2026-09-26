@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addChat, chatsReducer, selectChats } from './chatSlice.ts';
+import {
+  addChat,
+  chatsReducer,
+  selectChats,
+  setChatMessages,
+  startChatHistoryLoading,
+} from './chatSlice.ts';
 
 test('selectChats reuses results until chats change', () => {
   const state = { chats: chatsReducer(undefined, { type: 'init' }) };
@@ -25,4 +31,55 @@ test('selectChats sorts by order without changing the state', () => {
   const state = { chats: Object.freeze({ second, first }) };
   assert.deepEqual(selectChats(state), [first, second]);
   assert.deepEqual(Object.keys(state.chats), ['second', 'first']);
+});
+
+test('history refresh merges new data and updates existing messages', () => {
+  const chatId = 'chat';
+  const message = (idMessage, timestamp, textMessage) => ({
+    type: 'incoming',
+    idMessage,
+    timestamp,
+    typeMessage: 'textMessage',
+    chatId,
+    chatType: 'user',
+    textMessage,
+  });
+  let state = chatsReducer(undefined, addChat(chatId));
+
+  state = chatsReducer(
+    state,
+    setChatMessages({
+      chatId,
+      messages: [
+        message('first', 10, 'Old text'),
+        message('second', 20, 'Second'),
+      ],
+    }),
+  );
+  state = chatsReducer(state, startChatHistoryLoading(chatId));
+  assert.equal(state[chatId].historyStatus, 'loading');
+
+  state = chatsReducer(
+    state,
+    setChatMessages({
+      chatId,
+      messages: [
+        message('first', 10, 'Updated text'),
+        message('third', 30, 'Third'),
+      ],
+    }),
+  );
+
+  assert.deepEqual(
+    state[chatId].messages.map(({ idMessage, textMessage }) => ({
+      idMessage,
+      textMessage,
+    })),
+    [
+      { idMessage: 'first', textMessage: 'Updated text' },
+      { idMessage: 'second', textMessage: 'Second' },
+      { idMessage: 'third', textMessage: 'Third' },
+    ],
+  );
+  assert.equal(state[chatId].historyStatus, 'loaded');
 });
