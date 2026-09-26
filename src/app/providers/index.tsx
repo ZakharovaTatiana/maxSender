@@ -6,7 +6,11 @@ import { store } from '../store';
 export function AppProvider({ children }: PropsWithChildren) {
   return (
     <Provider store={store}>
-      <BrowserRouter>{children}</BrowserRouter>
+      <BrowserRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
+        {children}
+      </BrowserRouter>
     </Provider>
   );
 }

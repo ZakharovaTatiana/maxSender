@@ -1,4 +1,8 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import {
+  createSelector,
+  createSlice,
+  type PayloadAction,
+} from '@reduxjs/toolkit';
 
 export interface ContactInfo extends Record<string, unknown> {
   avatar?: string;
@@ -164,8 +168,9 @@ export const chatsReducer = chatsSlice.reducer;
 
 export const selectChatsState = (state: { chats: ChatsState }) => state.chats;
 
-export const selectChats = (state: { chats: ChatsState }) =>
-  Object.values(state.chats).sort((left, right) => left.order - right.order);
+export const selectChats = createSelector([selectChatsState], (chats) =>
+  Object.values(chats).sort((left, right) => left.order - right.order),
+);
 
 export const selectActiveChat = (state: { chats: ChatsState }) =>
   Object.values(state.chats).find((chat) => chat.isActive) ?? null;
