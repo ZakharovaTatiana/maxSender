@@ -22,7 +22,12 @@ export function ChatDetails() {
   const activeChat = useSelector(selectActiveChat);
 
   if (!activeChat) {
-    return <section className="min-w-0 flex-1" aria-label="Детализация чата" />;
+    return (
+      <section
+        className="hidden min-w-0 flex-1 lg:block"
+        aria-label="Детализация чата"
+      />
+    );
   }
 
   return <ActiveChatDetails chat={activeChat} key={activeChat.chatId} />;

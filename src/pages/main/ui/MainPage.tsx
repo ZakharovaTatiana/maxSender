@@ -10,7 +10,7 @@ export function MainPage() {
 
   if (isAuthorized) {
     return (
-      <main className="app-background flex h-screen overflow-hidden">
+      <main className="app-background flex h-screen h-dvh overflow-hidden">
         <NavigationSidebar />
         <ChatPanel />
         <ChatDetails />
