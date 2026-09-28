@@ -1,4 +1,6 @@
 import {
+  useEffect,
+  useRef,
   useState,
   type ChangeEvent,
   type ClipboardEvent,
@@ -31,6 +33,9 @@ export function ContactSearchForm() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [searchError, setSearchError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const clearPhoneNumberTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const hasPhoneNumber = phoneNumber.length > 0;
   const isPhoneNumberValid = isValidNationalPhoneNumber(
     phoneNumber,
@@ -38,9 +43,26 @@ export function ContactSearchForm() {
   );
   const nationalNumberLength = getNationalNumberLength(countryCode);
 
+  const cancelScheduledClear = () => {
+    if (clearPhoneNumberTimeoutRef.current) {
+      clearTimeout(clearPhoneNumberTimeoutRef.current);
+      clearPhoneNumberTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(
+    () => () => {
+      if (clearPhoneNumberTimeoutRef.current) {
+        clearTimeout(clearPhoneNumberTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
   const handleCountryChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const nextCountryCode = event.target.value as CountryCode;
 
+    cancelScheduledClear();
     setCountryCode(nextCountryCode);
     setSearchError('');
     setPhoneNumber((currentNumber) =>
@@ -50,6 +72,7 @@ export function ContactSearchForm() {
 
   const handlePhoneNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
     const digits = event.target.value.replace(/\D/g, '');
+    cancelScheduledClear();
     setSearchError('');
     setPhoneNumber(digits.slice(0, nationalNumberLength));
   };
@@ -66,6 +89,7 @@ export function ContactSearchForm() {
       return;
     }
 
+    cancelScheduledClear();
     setSearchError('');
     setCountryCode(parsedPhoneNumber.countryCode);
     setPhoneNumber(parsedPhoneNumber.nationalNumber);
@@ -82,10 +106,19 @@ export function ContactSearchForm() {
     setSearchError('');
 
     try {
+      const submittedPhoneNumber = phoneNumber;
       const result = await checkAccount(
         credentials,
         `${countryCode}${phoneNumber}`,
       );
+
+      cancelScheduledClear();
+      clearPhoneNumberTimeoutRef.current = setTimeout(() => {
+        setPhoneNumber((currentNumber) =>
+          currentNumber === submittedPhoneNumber ? '' : currentNumber,
+        );
+        clearPhoneNumberTimeoutRef.current = null;
+      }, 3000);
 
       if (chats[result.chatId]) {
         return;
@@ -115,7 +148,7 @@ export function ContactSearchForm() {
         <label>
           <span className="sr-only">Код страны</span>
           <select
-            className="h-12 rounded-l-2xl border-r border-slate-200 bg-slate-100 px-3 text-sm text-slate-950 outline-none transition focus:relative focus:bg-white focus:ring-2 focus:ring-[#3478f6]"
+            className="h-12 rounded-l-2xl border-r border-slate-200 bg-slate-100 px-3 text-sm text-slate-950 outline-none transition focus:relative focus:bg-white focus:ring-2 focus:ring-[#3478f6] focus:ring-inset"
             name="countryCode"
             onChange={handleCountryChange}
             value={countryCode}
@@ -143,7 +176,7 @@ export function ContactSearchForm() {
             <path d="m15.5 15.5 4 4" />
           </svg>
           <input
-            className="h-12 w-full rounded-r-2xl bg-slate-100 pr-12 pl-10 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#3478f6]"
+            className="h-12 w-full rounded-r-2xl bg-slate-100 pr-12 pl-10 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#3478f6] focus:ring-inset"
             inputMode="numeric"
             maxLength={nationalNumberLength}
             minLength={nationalNumberLength}
