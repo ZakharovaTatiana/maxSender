@@ -118,6 +118,31 @@ export function LoginForm() {
       >
         Войти
       </button>
+
+      <div
+        className="mt-5 flex items-start gap-3 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-700"
+        role="note"
+      >
+        <svg
+          aria-hidden="true"
+          className="mt-0.5 size-5 shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+          <path
+            d="M12 7.75v5.5M12 16.5v.25"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeWidth="2"
+          />
+        </svg>
+        <p>
+          Так как проект тестовый, данные для авторизации хранятся в
+          localStorage вашего браузера и передаются только в запросах к
+          GREEN-API.
+        </p>
+      </div>
     </form>
   );
 }
