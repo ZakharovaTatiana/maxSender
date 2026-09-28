@@ -58,7 +58,7 @@ export function persistSession(session: SessionState) {
       return;
     }
 
-    storage.removeItem(SESSION_STORAGE_KEY);
+    storage.clear();
   } catch {
     // Persistence failure must not block authentication in the current tab.
   }
